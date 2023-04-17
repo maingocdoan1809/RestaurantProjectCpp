@@ -3,5 +3,6 @@
     "*.ejs": "html",
     "map": "cpp",
     "queue": "cpp"
-  }
+  },
+  "C_Cpp.errorSquiggles": "enabled"
 }
