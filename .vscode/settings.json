@@ -2,7 +2,9 @@
   "files.associations": {
     "*.ejs": "html",
     "map": "cpp",
-    "queue": "cpp"
+    "queue": "cpp",
+    "new": "cpp",
+    "iostream": "cpp"
   },
   "C_Cpp.errorSquiggles": "enabled"
 }
