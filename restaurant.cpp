@@ -1,22 +1,43 @@
 #include "main.h"
 
-
+template<typename T>
 struct Node {
-	char _char;
+	T _char;
 	int _count;
+	int _id;
+	int _result;
 	Node* _left;
 	Node* _right;
-	Node(char c, int cnt, Node* l, Node* r) {
-		this->_char = c;
-		this->_count = cnt;
+	Node(T c, int cnt = 0, Node* l = nullptr, Node* r = nullptr) {
+		this->_char = c; // name
+		this->_count = cnt; // frequency or number of orders
 		this->_left = l;
 		this->_right = r;
+	}
+	Node(T c, int result, int tableId) {
+		this->_char = c;
+		this->_result = result;
+		this->_left = nullptr;
+		this->_right = nullptr;
+		this->_id = tableId;
+		this->_count = 0;
+	}
+	Node() {
+		_count = 0;
+		_left = nullptr;
+		_right = nullptr;
+	}
+	Node(int id) {
+		this->_id = id;
+	}
+	void increaseCount() {
+		this->_count++;
 	}
 };
 class HuffmanEncoding {
 private:
 
-	Node* _root;
+	Node<char>* _root;
 	string _message;
 	map<char, int> getFrequency(string message) {
 		map<char, int> data;
@@ -25,9 +46,11 @@ private:
 		}
 		return data;
 	}
+
+	template<typename T>
 	class Comparer {
 	public:
-		bool operator()(Node* below, Node* above)
+		bool operator()(Node<T>* below, Node<T>* above)
 		{
 			if (below->_count > above->_count) {
 				return true;
@@ -35,34 +58,34 @@ private:
 			return false;
 		}
 	};
-	using myqueue = priority_queue<Node*, vector<Node*>, HuffmanEncoding::Comparer >;
+	using myqueue = priority_queue<Node<char>*, vector<Node<char>*>, HuffmanEncoding::Comparer<char> >;
 
 	myqueue toList(map<char, int> data) {
 		myqueue myqueue;
 		for (auto pair : data) {
-			myqueue.push(new Node(pair.first, pair.second, nullptr, nullptr));
+			myqueue.push(new Node<char>(pair.first, pair.second));
 		}
 
 		return myqueue;
 
 	}
-	Node* buildTree(myqueue myqueue) {
-		Node* root;
+	Node<char>* buildTree(myqueue myqueue) {
+		Node<char>* root;
 		while (myqueue.size() >= 1) {
-			Node* leastNode = myqueue.top();
+			Node<char>* leastNode = myqueue.top();
 			myqueue.pop();
-			Node* secondleastNode = myqueue.top();
+			Node<char>* secondleastNode = myqueue.top();
 			cout << "Sum: " << leastNode->_char << " and " << secondleastNode->_char << endl;
 			myqueue.pop();
 			int sum = leastNode->_count + secondleastNode->_count;
-			Node* sumNode = new Node('#', sum, leastNode, secondleastNode);
+			Node<char>* sumNode = new Node<char>('#', sum, leastNode, secondleastNode);
 			myqueue.push(sumNode);
 		}
 		root = myqueue.top();
 		return root;
 	}
 
-	void travelHelper(Node* node, string code, map<char, string>& codes) {
+	void travelHelper(Node<char>* node, string code, map<char, string>& codes) {
 		if (node->_left == nullptr && node->_right == nullptr) {
 			codes[node->_char] = code;
 			return;
@@ -79,10 +102,10 @@ public:
 		_root = buildTree(queueChar);
 	}
 	~HuffmanEncoding() {
-		queue<Node*> nodes;
+		queue<Node<char>*> nodes;
 		nodes.push(this->_root);
 		do {
-			Node* topNode = nodes.front();
+			Node<char>* topNode = nodes.front();
 			nodes.pop();
 			if (topNode->_left != nullptr) {
 				nodes.push(topNode->_left);
@@ -109,7 +132,149 @@ public:
 	}
 };
 
-string encodeCustomerName(string name) {
+
+
+
+// implement AVL:
+class AVL {
+private:
+	Node<string>* _root;
+	void _balance();
+	void _insertHelper(Node<string>* root, int key, string customername);
+public:
+	void insert(string customerName);
+	void print() {
+		queue<Node<string>*> arr;
+		arr.push(_root);
+		do {
+			Node<string>* top = arr.front();
+			arr.pop();
+			if (top->_left != nullptr) {
+				arr.push(top->_left);
+			}
+			if (top->_right != nullptr) {
+				arr.push(top->_right);
+			}
+		} while (arr.size());
+	}
+};
+
+// our restaurant
+
+class Restaurant {
+private:
+public:
+	static int getResult(string customerName);
+	static bool isEven(size_t number);
+	static short decideArea(size_t resultNumber);
+	static string encodeCustomerName(string name);
+	static size_t convertToDecimal(string binaryStr);
+};
+
+// now implement a area:
+class Area {
+public:
+	virtual bool addCustomer(string customerName) = 0;
+	virtual bool removeCustomer(string customerName) = 0;
+	virtual int getSize() = 0;
+};
+
+class EvenArea : public Area {
+private:
+	map<int, Node<string>*> tables;
+	int _size = 0;
+public:
+	bool addCustomer(string customerName) override;
+	int getSize() override;
+	bool removeCustomer(string customerName) override;
+};
+class OddArea : public Area {
+private:
+
+public:
+	bool addCustomer(string customerName) override;
+	bool removeCustomer(string customerName) override;
+};
+
+//#######pragma endregion
+
+void AVL::_insertHelper(Node<string>* root, int key, string customerName) {
+	if (this->_root == nullptr) {
+		this->_root = new Node<string>(customerName, key, key % MAXSIZE);
+	}
+	else {
+		if (root->_id > key) {
+			_insertHelper(root->_left, key, customerName);
+		}
+		else {
+			_insertHelper(root->_right, key, customerName);
+		}
+	}
+}
+
+void AVL::insert(string customerName) {
+	int result = Restaurant::getResult(customerName);
+	_insertHelper(this->_root, result, customerName);
+}
+
+void AVL::_balance() {
+
+}
+//#################pragma endregion
+
+bool OddArea::addCustomer(string customerName) {
+
+}
+bool OddArea::removeCustomer(string customerName) {
+
+}
+
+//#######pragma endregion
+bool EvenArea::addCustomer(string customerName) {
+	if (_size == MAXSIZE / 2) {
+		return false;
+	}
+	int result = Restaurant::getResult(customerName);
+	int hashValue = result % 3;
+	Node<string>* newNode = nullptr;
+	while (true) {
+		try {
+			tables.at(hashValue);
+
+			newNode = new Node<string>();
+			tables[hashValue] = newNode;
+			newNode->_char = customerName;
+			newNode->_result = result;
+			// determine its id:
+			break;
+		}
+		catch (exception e) {
+			hashValue++;
+		}
+	}
+
+	_size++;
+	return true;
+}
+int EvenArea::getSize() {
+	return this->_size;
+}
+bool EvenArea::removeCustomer(string customerName) {
+
+}
+
+
+int Restaurant::getResult(string customerName) {
+	string encodedStr = encodeCustomerName(customerName);
+	return convertToDecimal(encodedStr);
+}
+bool Restaurant::isEven(size_t number) {
+	return number % 2 == 0;
+}
+short Restaurant::decideArea(size_t resultNumber) {
+	return isEven(resultNumber) ? 2 : 1;
+}
+string Restaurant::encodeCustomerName(string name) {
 	HuffmanEncoding encoder { name };
 	string encodedString = encoder.encodeToString();
 	size_t length = encodedString.length();
@@ -118,8 +283,7 @@ string encodeCustomerName(string name) {
 	}
 	return encodedString;
 }
-
-size_t convertToDecimal(string binaryStr) {
+size_t Restaurant::convertToDecimal(string binaryStr) {
 	size_t decimalResult = 0;
 	size_t length = binaryStr.length();
 	for (int i = length - 1; i >= 0; i--) {
@@ -127,73 +291,11 @@ size_t convertToDecimal(string binaryStr) {
 	}
 	return decimalResult;
 }
-bool isEven(size_t number) {
-	return number % 2 == 0;
-}
-short decideArea(size_t resultNumber) {
-	return isEven(resultNumber) ? 2 : 1;
-}
-struct Table {
-	string customerName;
-	int serveCount;
-	Table(string customerName, int serveCount) {
-		this->customerName = customerName;
-		this->serveCount = serveCount;
-	}
-	Table() {
-		Table("", 0);
-	}
-	void resetTable() {
-		this->customerName = "";
-		this->serveCount = 0;
-	}
-};
-// now implement a area:
-class Area {
-
-public:
-	static map<string, Table*> currentTables;
-
-	virtual void addCustomer(string customerName) = 0;
-	virtual void getCustomer(string customerName) = 0;
-	virtual void removeCustomer(string customerName) = 0;
-};
-map<string, Table*> Area::currentTables{};
-
-class EvenArea : public Area {
-private:
-	vector<Table*> tables;
-public:
-	EvenArea() {
-		fill(tables.begin(), tables.end(), new Table());
-	}
-	void addCustomer(string customerName) override {
-
-	}
-	void getCustomer(string customerName) override {
-
-	}
-	void removeCustomer(string customerName) override {
-
-	}
-};
-class OddArea : public Area {
-	void addCustomer(string customerName) override {
-
-	}
-	void getCustomer(string customerName) override {
-
-	}
-	void removeCustomer(string customerName) override {
-
-	}
-};
 
 void simulate(string filename)
 {
 	return;
 }
 int main() {
-	cout << convertToDecimal("1010");
 	return 0;
 }
