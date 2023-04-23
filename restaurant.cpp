@@ -6,8 +6,8 @@ struct Node {
 	int _count;
 	int _id;
 	int _result;
-	Node<T>* _left;
-	Node<T>* _right;
+	Node<T>* _left = nullptr;
+	Node<T>* _right = nullptr;
 
 	Node(T c, int cnt = 0, Node<T>* l = nullptr, Node<T>* r = nullptr) {
 		this->_char = c; // name
@@ -38,7 +38,7 @@ struct Node {
 class HuffmanEncoding {
 private:
 
-	Node<char>* _root;
+	Node<char>* _root = nullptr;
 	string _message;
 	map<char, int> getFrequency(string message) {
 		map<char, int> data;
@@ -71,8 +71,8 @@ private:
 
 	}
 	Node<char>* buildTree(myqueue myqueue) {
-		Node<char>* root;
-		while (myqueue.size() >= 1) {
+		Node<char>* root = nullptr;
+		while (myqueue.size() >= 2) {
 			Node<char>* leastNode = myqueue.top();
 			myqueue.pop();
 			Node<char>* secondleastNode = myqueue.top();
@@ -138,7 +138,8 @@ public:
 
 
 
-
+// newestNode:
+Node<string>* latestNode = nullptr;
 // implement AVL:
 class AVL {
 private:
@@ -216,7 +217,6 @@ public:
 			if (top->_right != nullptr) {
 				arr.push(top->_right);
 			}
-			cout << "Delete " << top->_char << endl;
 			delete top;
 			top = nullptr;
 		} while (arr.size());
@@ -235,6 +235,7 @@ public:
 	virtual bool addCustomer(string customerName, int id) = 0;
 	virtual bool removeCustomer(string customerName) = 0;
 	virtual int getSize() = 0;
+	virtual void print() = 0;
 };
 
 class EvenArea : public Area {
@@ -246,6 +247,8 @@ public:
 	int getSize() override;
 	bool removeCustomer(string customerName) override;
 	static int hashResult(size_t result);
+	void print() override;
+
 };
 class OddArea : public Area {
 private:
@@ -254,16 +257,25 @@ private:
 public:
 	bool addCustomer(string customerName, int id) override;
 	bool removeCustomer(string customerName) override;
-
+	int getSize() override;
+	void print() override;
 };
 class Restaurant {
 private:
-	Area* EvenArea;
-	Area* OddArea;
+	Area* evenArea;
+	Area* oddArea;
+	queue<Node<string>*> fifo;
+
 	// id <=> table
 	map<int, Node<string>*> tables;
 public:
+	Restaurant();
 	int decideID(int id);
+	void addCustomer(string customername);
+	void CLE(int num);
+	void PrintHT();
+	void printAVL();
+	void printMH();
 
 	static int getResult(string customerName);
 	static bool isEven(size_t number);
@@ -271,6 +283,29 @@ public:
 	static string encodeCustomerName(string name);
 	static size_t convertToDecimal(string binaryStr);
 	static int getIDTable(size_t result);
+};
+
+
+class Heap {
+private:
+	vector<Node<string>*> _heap;
+public:
+	void add(Node<string>* newNode) {
+		_heap.push_back(newNode);
+	}
+	void heapify(int parentIndex) {
+		int l = 2 * parentIndex + 1;
+		int r = 2 * parentIndex + 2;
+		int smallest = parentIndex;
+		if (l < _heap.size() && _heap[l]->_count < _heap[parentIndex]->_count)
+			smallest = l;
+		if (r < _heap.size() && _heap[r]->_count < _heap[smallest]->_count)
+			smallest = r;
+		if (smallest != parentIndex) {
+			swap(_heap[parentIndex], _heap[smallest]);
+			heapify(smallest);
+		}
+	}
 };
 //#######pragma endregion
 
@@ -286,14 +321,15 @@ void AVL::print() {
 		if (top->_right != nullptr) {
 			arr.push(top->_right);
 		}
-		cout << top->_char << ", " << top->_result << endl;
+		cout << top->_id << "-" << top->_result << endl;
 		top = nullptr;
 	} while (arr.size());
 }
 Node<string>* AVL::_insertHelper(Node<string>* r, int key, string name, int idtable) {
 
-	if (r == NULL) {
+	if (r == nullptr) {
 		r = new Node<string>(name, key, idtable);
+		latestNode = r;
 		return r;
 	}
 	if (key < r->_result) {
@@ -314,10 +350,21 @@ void AVL::insert(string customerName, int idTable) {
 //#################pragma endregion
 
 bool OddArea::addCustomer(string customerName, int id) {
-
+	if (this->_size >= MAXSIZE / 2) {
+		return false;
+	}
+	this->_avl.insert(customerName, id);
+	return true;
 }
 bool OddArea::removeCustomer(string customerName) {
 
+	return false;
+}
+int OddArea::getSize() {
+	return this->_size;
+}
+void OddArea::print() {
+	this->_avl.print();
 }
 
 //#######pragma endregion
@@ -357,10 +404,19 @@ int EvenArea::getSize() {
 bool EvenArea::removeCustomer(string customerName) {
 
 }
-
+void EvenArea::print() {
+	for (auto& table : this->tables) {
+		cout << table.second->_id << "-" << table.second->_result << endl;
+	}
+}
+Restaurant::Restaurant() {
+	this->evenArea = new EvenArea();
+	this->oddArea = new OddArea();
+}
 
 int Restaurant::getResult(string customerName) {
 	string encodedStr = encodeCustomerName(customerName);
+
 	return convertToDecimal(encodedStr);
 }
 bool Restaurant::isEven(size_t number) {
@@ -370,7 +426,9 @@ short Restaurant::decideArea(size_t resultNumber) {
 	return isEven(resultNumber) ? 2 : 1;
 }
 string Restaurant::encodeCustomerName(string name) {
+
 	HuffmanEncoding encoder(name);
+
 	string encodedString = encoder.encodeToString();
 	size_t length = encodedString.length();
 	if (length > 15) {
@@ -403,23 +461,50 @@ int Restaurant::decideID(int id) {
 	return id;
 }
 
+void Restaurant::CLE(int num) {
+
+}
+void Restaurant::PrintHT() {
+	this->evenArea->print();
+}
+void Restaurant::printAVL() {
+	this->oddArea->print();
+}
+void Restaurant::printMH() {
+
+}
+
+
+void Restaurant::addCustomer(string customername) {
+	if (this->tables.size() == MAXSIZE) {
+		return;
+	}
+	int result = getResult(customername);
+	int id = decideID(getIDTable(result));
+	int area = decideArea(result);
+
+	if (area == 1) {
+		if (!this->oddArea->addCustomer(customername, id)) {
+			this->evenArea->addCustomer(customername, id);
+		}
+	}
+	else {
+		if (!this->evenArea->addCustomer(customername, id)) {
+			this->oddArea->addCustomer(customername, id);
+		}
+	}
+	tables[id] = latestNode;
+	this->fifo.push(latestNode);
+
+}
+
+
+
 void simulate(string filename)
 {
 	return;
 }
 int main() {
-	AVL avl;
-	avl.insert("B6", 20);
-	avl.insert("A2", 10);
-	avl.insert("C9", 20);
-	avl.insert("E1", 20);
-	avl.print();
-	cout << "-------" << endl;
-	avl.insert("EAF", 20);
-
-	avl.insert("EAD", 20);
-	avl.print();
-
 
 	return 0;
 }
